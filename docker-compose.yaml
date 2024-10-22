@@ -1,30 +1,41 @@
 version: '3'
 
 services:
-  # pgadmin
-  pgadminapp:
-    image: dpage/pgadmin4:latest
+  music-stream-service:
+    build:
+      context: ./music-stream-service
     ports:
-      - "8080:80"
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=user@domain.com
-      - PGADMIN_DEFAULT_PASSWORD=bulutbilisimciler
-    restart: always
+      - "8000:5002"
     networks:
-      - bbnetwork
+      - loadbalancing
 
-  # PostgreSQL veritabanı
-  postgresapp:
-    image: postgres:latest
-    environment:
-      POSTGRES_DB: bulutdb  # Veritabanı adını burada ayarlayabilirsiniz
-      POSTGRES_USER: bbuser     # Kullanıcı adını burada ayarlayabilirsiniz
-      POSTGRES_PASSWORD: bbuserpassword  # Parolayı burada ayarlayabilirsiniz
-    volumes:
-      - /home/mock/postgres-data/:/tmp/
-      - /root/workspace/init.sql:/docker-entrypoint-initdb.d/init.sql
+  payment-service:
+    build:
+      context: ./payment-service
+    ports:
+      - "5003:5003"
     networks:
-      - bbnetwork
+      - loadbalancing
+
+  user-service:
+    build:
+      context: ./user-service
+    ports:
+      - "5001:5001"
+    networks:
+      - loadbalancing
+
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+    networks:
+      - loadbalancing
+    depends_on:
+      - music-stream-service
+      - payment-service
+      - user-service
 
 networks:
-  bbnetwork:
+  loadbalancing:
