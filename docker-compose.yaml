@@ -8,6 +8,8 @@ services:
       - "8000:5002"
     networks:
       - loadbalancing
+    depends_on:
+      - redis
 
   payment-service:
     build:
@@ -16,6 +18,8 @@ services:
       - "5003:5003"
     networks:
       - loadbalancing
+    depends_on:
+      - redis
 
   user-service:
     build:
@@ -24,6 +28,8 @@ services:
       - "5001:5001"
     networks:
       - loadbalancing
+    depends_on:
+      - redis
 
   nginx:
     build:
@@ -36,6 +42,11 @@ services:
       - music-stream-service
       - payment-service
       - user-service
+
+  redis:
+    image: redis:latest
+    networks:
+      - loadbalancing
 
 networks:
   loadbalancing:

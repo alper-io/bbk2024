@@ -1,8 +1,12 @@
 from flask import Flask, request, jsonify
 import sqlite3
 import os
+import redis
 
 app = Flask(__name__)
+
+# Initialize Redis
+redis_client = redis.Redis(host='redis', port=6379, decode_responses=True)
 
 # Initialize the database
 def init_db():
@@ -30,16 +34,25 @@ def create_user():
             (data['username'], data['email'])
         )
         conn.commit()
+    # Optionally store in Redis for caching
+    redis_client.set(data['username'], data['email'])
     return jsonify({"message": "User created"}), 201
 
 @app.route('/users/<username>', methods=['GET'])
 def get_user(username):
+    # First check Redis cache
+    email = redis_client.get(username)
+    if email:
+        return jsonify({"username": username, "email": email}), 200
+
     with sqlite3.connect('database.db') as conn:
         user = conn.execute(
             "SELECT * FROM users WHERE username=?",
             (username,)
         ).fetchone()
     if user:
+        # Cache the user data in Redis
+        redis_client.set(user[1], user[2])
         return jsonify({"username": user[1], "email": user[2]}), 200
     return jsonify({"message": "User not found"}), 404
 
