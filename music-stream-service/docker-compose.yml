@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:5002"
+    links:
+      - cassandra
+    environment:
+      - CASSANDRA_PORT_9042_TCP_ADDR=cassandra
+      - CASSANDRA_PORT_9042_TCP_PORT=9042
+
+  cassandra:
+    image: cassandra:2.2.0
+    ports:
+      - "9042:9042"
